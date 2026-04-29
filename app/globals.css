@@ -1,0 +1,58 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --bg0: #0d0f12;
+  --bg1: #13161b;
+  --bg2: #1a1e25;
+  --bg3: #22272f;
+  --bg4: #2a3040;
+  --border: #2e3440;
+  --border2: #3d4558;
+  --text1: #e8eaf0;
+  --text2: #9ba3b5;
+  --text3: #5c6478;
+  --accent: #4f8ef7;
+  --accent-dim: rgba(79, 142, 247, 0.12);
+  --accent-dim2: rgba(79, 142, 247, 0.22);
+  --green: #3ecf8e;
+  --green-dim: rgba(62, 207, 142, 0.12);
+  --amber: #f59e0b;
+  --amber-dim: rgba(245, 158, 11, 0.12);
+  --red: #f06060;
+  --red-dim: rgba(240, 96, 96, 0.12);
+  --radius: 8px;
+  --radius-lg: 12px;
+}
+
+[data-theme='light'] {
+  --bg0: #f8fafc;
+  --bg1: #ffffff;
+  --bg2: #f1f5f9;
+  --bg3: #e2e8f0;
+  --bg4: #cbd5e1;
+  --border: #e2e8f0;
+  --border2: #cbd5e1;
+  --text1: #0f172a;
+  --text2: #334155;
+  --text3: #64748b;
+  --accent: #3b82f6;
+}
+
+* { box-sizing: border-box; }
+
+html, body {
+  margin: 0;
+  padding: 0;
+  background: var(--bg0);
+  color: var(--text1);
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  font-size: 14px;
+}
+
+input, select, button, textarea { font-family: inherit; }
+
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 3px; }

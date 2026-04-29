@@ -1,0 +1,8 @@
+PNG-Icons für die PWA bitte hier ablegen:
+- icon-192.png (192x192)
+- icon-512.png (512x512)
+
+Schnell-Lösung für den Start: ein einfaches PNG mit dem Buchstaben "D" und blauem Hintergrund.
+Generatoren wie https://realfavicongenerator.net erzeugen einen kompletten Icon-Satz aus einem Quellbild in 30 Sekunden.
+
+Dann diese Datei löschen.
