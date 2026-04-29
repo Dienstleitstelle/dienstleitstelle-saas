@@ -329,7 +329,7 @@ create table public.schichtvorlagen (
 create index idx_vorlagen_tenant on public.schichtvorlagen(tenant_id);
 
 -- ==========================================================================
--- AUDIT LOG — wer hat was wann gemacht (ArbZG-Beweisbarkeit, DSGVO)
+-- AUDIT LOG -- wer hat was wann gemacht (Nachweis + DSGVO)
 -- ==========================================================================
 create table public.audit_log (
   id          uuid primary key default uuid_generate_v4(),

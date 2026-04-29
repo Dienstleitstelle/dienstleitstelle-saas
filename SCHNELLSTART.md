@@ -102,7 +102,7 @@ Folge diesen Schritten in der Reihenfolge. Wenn etwas hakt, melde dich, dann geh
 - **Login & Signup** mit Magic Link (kein Passwort nötig)
 - **Mandantentrennung**: jedes Unternehmen sieht nur seine Daten
 - **Drei Rollen**: Admin, Leitung, Mitarbeiter
-- **Mitarbeiter anlegen, Objekte anlegen, Dienstplan mit ArbZG-Live-Prüfung**
+- **Mitarbeiter anlegen, Objekte anlegen, Dienstplan mit Regel-Live-Pruefung**
 - **Team-Einladungen** mit eindeutigen Tokens
 - **Mobile-fähig** (am Handy als App installierbar)
 

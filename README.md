@@ -90,7 +90,7 @@ Beim ersten Aufruf am Handy bietet der Browser an, die App zum Homescreen hinzuz
 Diese erste Version enthält:
 - ✅ Multi-Tenant Auth & Einladungen
 - ✅ Mitarbeiter, Objekte, Dienstplan
-- ✅ ArbZG-Compliance-Engine
+- ✅ Regel-Engine (konfigurierbar)
 - ✅ Mobile-fähige PWA
 
 Später dazu (nach Bedarf priorisierbar):

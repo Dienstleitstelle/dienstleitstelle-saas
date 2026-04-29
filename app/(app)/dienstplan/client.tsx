@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from 'react';
 import { createClient } from '@/lib/supabase/client';
-import { pruefeArbZG } from '@/lib/arbzg';
+import { pruefeSchicht, DEFAULT_REGELN } from '@/lib/regeln';
 import type { Mitarbeiter, Objekt, Einteilung } from '@/lib/supabase/types';
 
 const DAYS = ['Mo', 'Di', 'Mi', 'Do', 'Fr', 'Sa', 'So'];
@@ -10,7 +10,7 @@ const DAYS = ['Mo', 'Di', 'Mi', 'Do', 'Fr', 'Sa', 'So'];
 function getMonday(off: number): Date {
   const d = new Date();
   d.setHours(12, 0, 0, 0);
-  const dow = (d.getDay() + 6) % 7; // Mo=0
+  const dow = (d.getDay() + 6) % 7;
   d.setDate(d.getDate() - dow + off * 7);
   return d;
 }
@@ -155,24 +155,24 @@ function EinteilenModal({ objektId, datum, objekt, mitarbeiter, alleEinteilungen
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
-  const ma = mitarbeiter.find((m) => m.id === maId);
-
-  // ArbZG-Live-Check
-  const arbzg = useMemo(() => {
-    if (!ma) return { ok: true, blocks: [], warns: [] };
-    return pruefeArbZG({
-      von, bis, datum,
-      ma: { gruppe: ma.gruppe, vertrag: ma.vertrag },
-      obj: { branche: objekt.branche },
-      andereEinteilungen: alleEinteilungen
-        .filter((e) => e.mitarbeiter_id === ma.id)
-        .map((e) => ({ datum: e.datum, von: e.von, bis: e.bis })),
-    });
-  }, [ma, von, bis, datum, objekt.branche, alleEinteilungen]);
+  // Live-Pruefung gegen die hinterlegten Regeln (vorerst Defaults).
+  // Phase 1 wird die Regeln pro Berufsgruppe aus der DB laden.
+  const pruefung = useMemo(() => {
+    if (!maId) return { ok: true, hinweise: [], sperren: [] };
+    return pruefeSchicht(
+      {
+        schicht: { von, bis, datum },
+        andereEinteilungen: alleEinteilungen
+          .filter((e) => e.mitarbeiter_id === maId)
+          .map((e) => ({ datum: e.datum, von: e.von, bis: e.bis })),
+      },
+      DEFAULT_REGELN
+    );
+  }, [maId, von, bis, datum, alleEinteilungen]);
 
   async function save(e: React.FormEvent) {
     e.preventDefault();
-    if (!arbzg.ok) return;
+    if (!pruefung.ok) return;
     setError(null); setLoading(true);
     const supabase = createClient();
     const { data: profile } = await supabase.from('profiles').select('tenant_id').single();
@@ -217,16 +217,16 @@ function EinteilenModal({ objektId, datum, objekt, mitarbeiter, alleEinteilungen
           </div>
         </div>
 
-        {arbzg.warns.length > 0 && (
+        {pruefung.hinweise.length > 0 && (
           <div className="mt-3 rounded-lg border border-amber-700 bg-[var(--amber-dim)] text-[var(--amber)] p-3 text-xs">
-            <div className="font-bold mb-1">Hinweis (ArbZG)</div>
-            {arbzg.warns.map((w, i) => <div key={i}>• {w}</div>)}
+            <div className="font-bold mb-1">Hinweis</div>
+            {pruefung.hinweise.map((w, i) => <div key={i}>• {w}</div>)}
           </div>
         )}
-        {arbzg.blocks.length > 0 && (
+        {pruefung.sperren.length > 0 && (
           <div className="mt-3 rounded-lg border border-red-700 bg-[var(--red-dim)] text-[var(--red)] p-3 text-xs">
-            <div className="font-bold mb-1">Blockiert (ArbZG)</div>
-            {arbzg.blocks.map((b, i) => <div key={i}>• {b}</div>)}
+            <div className="font-bold mb-1">Regelverstoß</div>
+            {pruefung.sperren.map((b, i) => <div key={i}>• {b}</div>)}
           </div>
         )}
         {error && (
@@ -240,7 +240,7 @@ function EinteilenModal({ objektId, datum, objekt, mitarbeiter, alleEinteilungen
             className="px-3 py-1.5 rounded-lg border border-border2 text-text2 text-sm">
             Abbrechen
           </button>
-          <button type="submit" disabled={!arbzg.ok || loading}
+          <button type="submit" disabled={!pruefung.ok || loading}
             className="px-3 py-1.5 rounded-lg bg-accent text-white text-sm font-semibold disabled:opacity-40">
             {loading ? 'Speichere…' : 'Eintragen'}
           </button>
