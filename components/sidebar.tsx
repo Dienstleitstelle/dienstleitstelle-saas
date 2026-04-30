@@ -20,6 +20,9 @@ const NAV: NavItem[] = [
   { section: 'Übersicht', label: 'Dienstplan',      href: '/dienstplan',    icon: '📅', rollen: ['admin','leitung','mitarbeiter'] },
   { section: 'Übersicht', label: 'Schwarzes Brett', href: '/pinnwand',      icon: '📌', rollen: ['admin','leitung','mitarbeiter'] },
   { section: 'Übersicht', label: 'Abwesenheit',     href: '/abwesenheit',   icon: '🏖️', rollen: ['admin','leitung','mitarbeiter'] },
+  { section: 'Übersicht', label: 'Aufgaben',        href: '/aufgaben',      icon: '✅', rollen: ['admin','leitung','mitarbeiter'] },
+  { section: 'Übersicht', label: 'Berichte',        href: '/berichte',      icon: '📝', rollen: ['admin','leitung','mitarbeiter'] },
+  { section: 'Übersicht', label: 'Zeiterfassung',   href: '/zeiterfassung', icon: '⏱️', rollen: ['admin','leitung','mitarbeiter'] },
 
   // Verwaltung (Admin + Leitung)
   { section: 'Verwaltung', label: 'Mitarbeiter',     href: '/mitarbeiter',     icon: '👥', rollen: ['admin','leitung'] },
@@ -110,17 +113,4 @@ export function Sidebar({ rolle, vorname, nachname, firma }: SidebarProps) {
             </div>
             <div className="min-w-0">
               <div className="text-[12px] font-medium text-text1 truncate">{vorname} {nachname}</div>
-              <div className="text-[10px] text-text3 capitalize">{rolle}</div>
-            </div>
-          </div>
-          <button onClick={logout}
-            className="w-full text-[11px] py-1.5 rounded-md border border-border2 text-text3 hover:text-text1 hover:bg-bg3">
-            Abmelden
-          </button>
-        </div>
-      </aside>
-
-      {open && <div onClick={() => setOpen(false)} className="md:hidden fixed inset-0 bg-black/50 z-40" />}
-    </>
-  );
-}
+              <div className="text-[10px] text-text3 capitali
