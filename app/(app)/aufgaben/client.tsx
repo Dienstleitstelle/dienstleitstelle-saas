@@ -40,7 +40,7 @@ export function AufgabenClient({ initial, mitarbeiter, objekte, rolle, meineMaId
   }
 
   async function del(id: string) {
-    if (!confirm('Aufgabe löschen?')) return;
+    if (!confirm('Aufgabe loeschen?')) return;
     const supabase = createClient();
     await supabase.from('aufgaben').delete().eq('id', id);
     reload();
@@ -61,9 +61,7 @@ export function AufgabenClient({ initial, mitarbeiter, objekte, rolle, meineMaId
           <p className="text-text3 text-sm mt-1">Standard-Tasks und Sonder-Aufgaben.</p>
         </div>
         {canCreate && (
-          <button onClick={() => setNeu(true)} className="px-3 py-1.5 rounded-lg bg-accent text-white text-sm font-semibold">
-            + Aufgabe
-          </button>
+          <button onClick={() => setNeu(true)} className="px-3 py-1.5 rounded-lg bg-accent text-white text-sm font-semibold">+ Aufgabe</button>
         )}
       </div>
 
@@ -82,19 +80,18 @@ export function AufgabenClient({ initial, mitarbeiter, objekte, rolle, meineMaId
         <ul className="space-y-2">
           {gefiltert.map((a) => (
             <li key={a.id} className={`bg-bg1 border rounded-xl p-3 flex items-start gap-3 ${a.erledigt ? 'border-border1 opacity-60' : 'border-border1'}`}>
-              <input type="checkbox" checked={a.erledigt} onChange={(e) => toggle(a.id, e.target.checked)}
-                className="mt-1 w-4 h-4" />
+              <input type="checkbox" checked={a.erledigt} onChange={(e) => toggle(a.id, e.target.checked)} className="mt-1 w-4 h-4" />
               <div className="min-w-0 flex-1">
                 <div className={`text-text1 text-sm font-medium ${a.erledigt ? 'line-through' : ''}`}>{a.titel}</div>
                 {a.beschreibung && <div className="text-text3 text-xs mt-0.5">{a.beschreibung}</div>}
                 <div className="text-text3 text-[10px] mt-1 flex flex-wrap gap-x-3">
-                  {a.mitarbeiter && <span>👤 {a.mitarbeiter.vorname} {a.mitarbeiter.nachname}</span>}
-                  {a.objekt && <span>🏢 {a.objekt.name}</span>}
-                  {a.faellig_am && <span>📅 {new Date(a.faellig_am + 'T12:00').toLocaleDateString('de-DE')}</span>}
+                  {a.mitarbeiter && <span>MA: {a.mitarbeiter.vorname} {a.mitarbeiter.nachname}</span>}
+                  {a.objekt && <span>Objekt: {a.objekt.name}</span>}
+                  {a.faellig_am && <span>Faellig: {new Date(a.faellig_am + 'T12:00').toLocaleDateString('de-DE')}</span>}
                 </div>
               </div>
-              {(canCreate || a.mitarbeiter_id === meineMaId) && (
-                <button onClick={() => del(a.id)} className="text-xs text-[var(--red)] flex-shrink-0">✕</button>
+              {(canCreate || (meineMaId && a.mitarbeiter_id === meineMaId)) && (
+                <button onClick={() => del(a.id)} className="text-xs text-[var(--red)] flex-shrink-0" title="Loeschen">x</button>
               )}
             </li>
           ))}
@@ -127,8 +124,7 @@ function NeuModal({ mitarbeiter, objekte, onClose, onSaved }: {
     const { error } = await supabase.from('aufgaben').insert({
       tenant_id: profile?.tenant_id,
       titel, beschreibung: beschreibung || null,
-      mitarbeiter_id: maId || null,
-      objekt_id: objektId || null,
+      mitarbeiter_id: maId || null, objekt_id: objektId || null,
       faellig_am: faelligAm || null,
     });
     setLoading(false);
@@ -151,9 +147,9 @@ function NeuModal({ mitarbeiter, objekte, onClose, onSaved }: {
             <textarea rows={3} value={beschreibung} onChange={(e) => setBeschreibung(e.target.value)} className={inputCls} />
           </label>
           <label className="block">
-            <Label>Zuweisen an Mitarbeiter</Label>
+            <Label>Zuweisen an</Label>
             <select value={maId} onChange={(e) => setMaId(e.target.value)} className={inputCls}>
-              <option value="">— niemand zugewiesen —</option>
+              <option value="">- niemand -</option>
               {mitarbeiter.map((m: any) => <option key={m.id} value={m.id}>{m.vorname} {m.nachname}</option>)}
             </select>
           </label>
@@ -161,12 +157,12 @@ function NeuModal({ mitarbeiter, objekte, onClose, onSaved }: {
             <label className="block">
               <Label>Objekt</Label>
               <select value={objektId} onChange={(e) => setObjektId(e.target.value)} className={inputCls}>
-                <option value="">—</option>
+                <option value="">-</option>
                 {objekte.map((o: any) => <option key={o.id} value={o.id}>{o.name}</option>)}
               </select>
             </label>
             <label className="block">
-              <Label>Fällig am</Label>
+              <Label>Faellig am</Label>
               <input type="date" value={faelligAm} onChange={(e) => setFaelligAm(e.target.value)} className={inputCls} />
             </label>
           </div>
@@ -174,7 +170,7 @@ function NeuModal({ mitarbeiter, objekte, onClose, onSaved }: {
         <div className="flex gap-2 justify-end mt-5">
           <button type="button" onClick={onClose} className="px-3 py-1.5 rounded-lg border border-border2 text-text2 text-sm">Abbrechen</button>
           <button type="submit" disabled={loading} className="px-3 py-1.5 rounded-lg bg-accent text-white text-sm font-semibold disabled:opacity-50">
-            {loading ? 'Speichere…' : 'Anlegen'}
+            {loading ? 'Speichere...' : 'Anlegen'}
           </button>
         </div>
       </form>

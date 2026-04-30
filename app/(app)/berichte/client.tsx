@@ -19,9 +19,9 @@ interface Vorlage {
   felder: Feld[];
 }
 
-const ZWECK_ICON: Record<string, string> = {
-  uebergabe: '🤝', vorfall: '⚠️', wartung: '🔧', rundgang: '🚶',
-  medikamente: '💊', postenbuch: '📓', auftraggeber: '📋', sonstiges: '📌',
+const ZWECK_LABEL: Record<string, string> = {
+  uebergabe: 'Uebergabe', vorfall: 'Vorfall', wartung: 'Wartung', rundgang: 'Rundgang',
+  medikamente: 'Medikamente', postenbuch: 'Postenbuch', auftraggeber: 'Auftraggeber', sonstiges: 'Bericht',
 };
 
 export function BerichteClient({ vorlagen, eintraege, objekte }: {
@@ -49,7 +49,7 @@ export function BerichteClient({ vorlagen, eintraege, objekte }: {
     <div className="space-y-4">
       <div>
         <h1 className="text-xl font-bold text-text1">Berichte</h1>
-        <p className="text-text3 text-sm mt-1">Übergaben, Vorfälle, Wartungen, Postenbuch.</p>
+        <p className="text-text3 text-sm mt-1">Uebergaben, Vorfaelle, Wartungen, Postenbuch.</p>
       </div>
 
       {vorlagen.length === 0 ? (
@@ -59,12 +59,12 @@ export function BerichteClient({ vorlagen, eintraege, objekte }: {
       ) : (
         <>
           <div>
-            <div className="text-text2 text-xs uppercase tracking-wide mb-2">+ Neuen Bericht ausfüllen</div>
+            <div className="text-text2 text-xs uppercase tracking-wide mb-2">+ Neuen Bericht ausfuellen</div>
             <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
               {vorlagen.map(v => (
                 <button key={v.id} onClick={() => setNeu(v)}
                   className="flex items-center gap-2 p-3 rounded-xl border border-border1 bg-bg1 hover:border-accent transition-colors text-left">
-                  <span className="text-xl">{ZWECK_ICON[v.zweck] ?? '📋'}</span>
+                  <span className="text-[10px] font-bold uppercase tracking-wide text-accent bg-[var(--accent-dim2)] rounded px-1.5 py-0.5">{ZWECK_LABEL[v.zweck] ?? 'Bericht'}</span>
                   <div className="min-w-0">
                     <div className="text-text1 text-sm font-semibold truncate">{v.name}</div>
                   </div>
@@ -76,35 +76,35 @@ export function BerichteClient({ vorlagen, eintraege, objekte }: {
           <div>
             <div className="flex items-center justify-between mb-2">
               <div className="text-text2 text-xs uppercase tracking-wide">Letzte Berichte</div>
-              <input value={filter} onChange={(e) => setFilter(e.target.value)} placeholder="Suchen…"
+              <input value={filter} onChange={(e) => setFilter(e.target.value)} placeholder="Suchen..."
                 className="px-2 py-1 rounded bg-bg2 border border-border1 text-text1 text-xs w-40" />
             </div>
             {gefiltert.length === 0 ? (
-              <div className="bg-bg1 border border-border1 rounded-xl text-text3 text-sm text-center py-8">Keine Einträge.</div>
+              <div className="bg-bg1 border border-border1 rounded-xl text-text3 text-sm text-center py-8">Keine Eintraege.</div>
             ) : (
               <ul className="space-y-2">
                 {gefiltert.map((e: any) => (
                   <li key={e.id}>
                     <Link href={`/berichte/${e.id}`} className="block bg-bg1 border border-border1 rounded-xl p-3 hover:border-accent transition-colors">
-                    <div className="flex items-start gap-3">
-                      <span className="text-xl">{ZWECK_ICON[e.vorlage?.zweck] ?? '📋'}</span>
-                      <div className="min-w-0 flex-1">
-                        <div className="text-text1 text-sm font-semibold">{e.vorlage?.name}</div>
-                        <div className="text-text3 text-xs">
-                          {e.objekt?.name && <span>{e.objekt.name} · </span>}
-                          von {e.ersteller?.vorname} {e.ersteller?.nachname} · {new Date(e.created_at).toLocaleString('de-DE', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' })}
+                      <div className="flex items-start gap-3">
+                        <span className="text-[10px] font-bold uppercase tracking-wide text-accent bg-[var(--accent-dim2)] rounded px-1.5 py-0.5 flex-shrink-0">{ZWECK_LABEL[e.vorlage?.zweck] ?? 'Bericht'}</span>
+                        <div className="min-w-0 flex-1">
+                          <div className="text-text1 text-sm font-semibold">{e.vorlage?.name}</div>
+                          <div className="text-text3 text-xs">
+                            {e.objekt?.name && <span>{e.objekt.name} - </span>}
+                            von {e.ersteller?.vorname} {e.ersteller?.nachname} - {new Date(e.created_at).toLocaleString('de-DE', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' })}
+                          </div>
+                          {e.schweregrad && (
+                            <div className="text-[var(--amber)] text-xs mt-1">Schweregrad: {e.schweregrad}/5</div>
+                          )}
+                          <div className="mt-2 space-y-0.5 text-text2 text-xs">
+                            {Object.entries(e.werte || {}).slice(0, 4).map(([k, v]: any) => (
+                              <div key={k}><strong className="text-text1">{k}:</strong> {String(v).slice(0, 100)}</div>
+                            ))}
+                          </div>
                         </div>
-                        {e.schweregrad && (
-                          <div className="text-[var(--amber)] text-xs mt-1">Schweregrad: {'⚠️'.repeat(e.schweregrad)}</div>
-                        )}
-                        <div className="mt-2 space-y-0.5 text-text2 text-xs">
-                          {Object.entries(e.werte || {}).slice(0, 4).map(([k, v]: any) => (
-                            <div key={k}><strong className="text-text1">{k}:</strong> {String(v).slice(0, 100)}</div>
-                          ))}
-                        </div>
+                        <StatusBadge status={e.status} />
                       </div>
-                      <StatusBadge status={e.status} />
-                    </div>
                     </Link>
                   </li>
                 ))}
@@ -136,7 +136,6 @@ function BerichtModal({ vorlage, objekte, onClose, onSaved }: {
   async function save(e: React.FormEvent) {
     e.preventDefault();
     setError(null); setLoading(true);
-    // Pflichtfelder pruefen
     for (const f of vorlage.felder) {
       if (f.pflicht && !werte[f.label]) {
         setError(`Pflichtfeld fehlt: ${f.label}`); setLoading(false); return;
@@ -170,7 +169,7 @@ function BerichtModal({ vorlage, objekte, onClose, onSaved }: {
             <label className="block">
               <Label>Objekt (optional)</Label>
               <select value={objektId} onChange={(e) => setObjektId(e.target.value)} className={inputCls}>
-                <option value="">— wählen —</option>
+                <option value="">- waehlen -</option>
                 {objekte.map(o => <option key={o.id} value={o.id}>{o.name}</option>)}
               </select>
             </label>
@@ -198,7 +197,7 @@ function BerichtModal({ vorlage, objekte, onClose, onSaved }: {
         <div className="flex gap-2 justify-end mt-5">
           <button type="button" onClick={onClose} className="px-3 py-1.5 rounded-lg border border-border2 text-text2 text-sm">Abbrechen</button>
           <button type="submit" disabled={loading} className="px-3 py-1.5 rounded-lg bg-accent text-white text-sm font-semibold disabled:opacity-50">
-            {loading ? 'Speichere…' : 'Bericht speichern'}
+            {loading ? 'Speichere...' : 'Bericht speichern'}
           </button>
         </div>
       </form>
@@ -224,7 +223,7 @@ function FeldInput({ feld, wert, onChange }: { feld: Feld; wert: any; onChange: 
       return (
         <label className="block">{lbl}
           <select value={v} onChange={(e) => onChange(e.target.value)} className={inputCls}>
-            <option value="">— wählen —</option>
+            <option value="">- waehlen -</option>
             {(feld.optionen ?? []).map(o => <option key={o} value={o}>{o}</option>)}
           </select>
         </label>
@@ -273,7 +272,7 @@ function FeldInput({ feld, wert, onChange }: { feld: Feld; wert: any; onChange: 
     default:
       return (
         <label className="block">{lbl}
-          <input value={v} onChange={(e) => onChange(e.target.value)} placeholder={`(Typ ${feld.typ} — Datei-Upload kommt bald)`} className={inputCls} />
+          <input value={v} onChange={(e) => onChange(e.target.value)} placeholder={`(Typ ${feld.typ} - Datei-Upload kommt bald)`} className={inputCls} />
         </label>
       );
   }
@@ -289,4 +288,7 @@ function StatusBadge({ status }: { status: string }) {
 }
 
 const inputCls = 'w-full px-3 py-2 rounded-lg bg-bg2 border border-border1 text-text1 text-sm outline-none focus:border-accent';
-function Lab
+
+function Label({ children }: { children: React.ReactNode }) {
+  return <span className="block text-[10px] uppercase tracking-wide text-text3 mb-1">{children}</span>;
+}

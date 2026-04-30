@@ -7,35 +7,21 @@ import { pruefeSchicht, DEFAULT_REGELN, type Regelwerk } from '@/lib/regeln';
 const DAYS = ['Mo', 'Di', 'Mi', 'Do', 'Fr', 'Sa', 'So'];
 
 interface MA {
-  id: string;
-  vorname: string;
-  nachname: string;
-  vertrag: string;
+  id: string; vorname: string; nachname: string; vertrag: string;
   berufsgruppe_id: string | null;
 }
 interface Objekt {
-  id: string;
-  name: string;
-  adresse: string | null;
-  von_default: string | null;
-  bis_default: string | null;
+  id: string; name: string; adresse: string | null;
+  von_default: string | null; bis_default: string | null;
 }
 interface Berufsgruppe { id: string; name: string; regelwerk: Regelwerk; }
 interface Einteilung {
-  id: string;
-  objekt_id: string;
-  mitarbeiter_id: string;
-  datum: string;
-  von: string;
-  bis: string;
+  id: string; objekt_id: string; mitarbeiter_id: string;
+  datum: string; von: string; bis: string;
 }
 interface Urlaub {
-  id: string;
-  mitarbeiter_id: string;
-  von: string;
-  bis: string;
-  typ: string;
-  status: string;
+  id: string; mitarbeiter_id: string; von: string; bis: string;
+  typ: string; status: string;
 }
 
 function getMonday(off: number): Date {
@@ -56,9 +42,7 @@ function getISOWeek(d: Date): number {
 }
 
 export function DienstplanClient({ objekte, mitarbeiter, berufsgruppen, rolle }: {
-  objekte: Objekt[];
-  mitarbeiter: MA[];
-  berufsgruppen: Berufsgruppe[];
+  objekte: Objekt[]; mitarbeiter: MA[]; berufsgruppen: Berufsgruppe[];
   rolle: 'admin' | 'leitung' | 'mitarbeiter';
 }) {
   const [wkOff, setWkOff] = useState(0);
@@ -68,9 +52,7 @@ export function DienstplanClient({ objekte, mitarbeiter, berufsgruppen, rolle }:
 
   const monday = useMemo(() => getMonday(wkOff), [wkOff]);
   const dates = useMemo(() => Array.from({ length: 7 }, (_, i) => {
-    const d = new Date(monday);
-    d.setDate(monday.getDate() + i);
-    return d;
+    const d = new Date(monday); d.setDate(monday.getDate() + i); return d;
   }), [monday]);
 
   const canEdit = rolle === 'admin' || rolle === 'leitung';
@@ -92,15 +74,15 @@ export function DienstplanClient({ objekte, mitarbeiter, berufsgruppen, rolle }:
     <div className="space-y-4">
       <div className="flex items-center justify-between flex-wrap gap-2">
         <div className="flex items-center gap-2">
-          <button onClick={() => setWkOff(wkOff - 1)} className="px-3 py-1.5 rounded-lg border border-border2 text-text2 text-sm">← Zurück</button>
+          <button onClick={() => setWkOff(wkOff - 1)} className="px-3 py-1.5 rounded-lg border border-border2 text-text2 text-sm">Zurueck</button>
           <span className="text-sm font-semibold text-text1 px-3">
-            KW {getISOWeek(monday)} · {fmtNice(dates[0])} – {fmtNice(dates[6])}
+            KW {getISOWeek(monday)} - {fmtNice(dates[0])} bis {fmtNice(dates[6])}
           </span>
-          <button onClick={() => setWkOff(wkOff + 1)} className="px-3 py-1.5 rounded-lg border border-border2 text-text2 text-sm">Vor →</button>
+          <button onClick={() => setWkOff(wkOff + 1)} className="px-3 py-1.5 rounded-lg border border-border2 text-text2 text-sm">Vor</button>
           <button onClick={() => setWkOff(0)} className="px-3 py-1.5 rounded-lg border border-accent text-accent text-sm">Heute</button>
         </div>
         <span className="text-text3 text-xs">
-          {canEdit ? 'Auf eine Zelle klicken zum Einteilen.' : 'Nur Lesezugriff. Wende dich an deine Leitung für Änderungen.'}
+          {canEdit ? 'Auf eine Zelle klicken zum Einteilen.' : 'Nur Lesezugriff.'}
         </span>
       </div>
 
@@ -116,7 +98,7 @@ export function DienstplanClient({ objekte, mitarbeiter, berufsgruppen, rolle }:
 
             {objekte.length === 0 && (
               <div className="col-span-8 text-center text-text3 py-8 text-sm">
-                Lege erst Objekte an, um Schichten planen zu können.
+                Lege erst Objekte an, um Schichten planen zu koennen.
               </div>
             )}
 
@@ -126,7 +108,7 @@ export function DienstplanClient({ objekte, mitarbeiter, berufsgruppen, rolle }:
                   <div className="text-text1 text-sm font-semibold truncate">{obj.name}</div>
                   <div className="text-text3 text-[10px] truncate">{obj.adresse}</div>
                   <div className="text-text3 text-[10px] font-mono">
-                    {obj.von_default?.slice(0, 5)}–{obj.bis_default?.slice(0, 5)}
+                    {obj.von_default?.slice(0, 5)}-{obj.bis_default?.slice(0, 5)}
                   </div>
                 </div>
                 {dates.map((d) => {
@@ -146,7 +128,7 @@ export function DienstplanClient({ objekte, mitarbeiter, berufsgruppen, rolle }:
                               {ma ? `${ma.vorname} ${ma.nachname}` : '?'}
                             </div>
                             <div className="text-accent/70 text-[10px] font-mono">
-                              {e.von?.slice(0, 5)}–{e.bis?.slice(0, 5)}
+                              {e.von?.slice(0, 5)}-{e.bis?.slice(0, 5)}
                             </div>
                           </div>
                         );
@@ -162,15 +144,11 @@ export function DienstplanClient({ objekte, mitarbeiter, berufsgruppen, rolle }:
 
       {modal && (
         <EinteilenSidebar
-          objektId={modal.objektId}
-          datum={modal.datum}
+          objektId={modal.objektId} datum={modal.datum}
           objekt={objekte.find((o) => o.id === modal.objektId)!}
-          mitarbeiter={mitarbeiter}
-          bgMap={bgMap}
-          alleEinteilungen={einteilungen}
-          urlaube={urlaube}
-          onClose={() => setModal(null)}
-          onSaved={() => reload()}
+          mitarbeiter={mitarbeiter} bgMap={bgMap}
+          alleEinteilungen={einteilungen} urlaube={urlaube}
+          onClose={() => setModal(null)} onSaved={() => reload()}
         />
       )}
     </div>
@@ -178,15 +156,9 @@ export function DienstplanClient({ objekte, mitarbeiter, berufsgruppen, rolle }:
 }
 
 function EinteilenSidebar({ objektId, datum, objekt, mitarbeiter, bgMap, alleEinteilungen, urlaube, onClose, onSaved }: {
-  objektId: string;
-  datum: string;
-  objekt: Objekt;
-  mitarbeiter: MA[];
-  bgMap: Record<string, Berufsgruppe>;
-  alleEinteilungen: Einteilung[];
-  urlaube: Urlaub[];
-  onClose: () => void;
-  onSaved: () => void;
+  objektId: string; datum: string; objekt: Objekt; mitarbeiter: MA[];
+  bgMap: Record<string, Berufsgruppe>; alleEinteilungen: Einteilung[]; urlaube: Urlaub[];
+  onClose: () => void; onSaved: () => void;
 }) {
   const [von, setVon] = useState(objekt.von_default?.slice(0, 5) ?? '08:00');
   const [bis, setBis] = useState(objekt.bis_default?.slice(0, 5) ?? '17:00');
@@ -194,22 +166,15 @@ function EinteilenSidebar({ objektId, datum, objekt, mitarbeiter, bgMap, alleEin
   const [busy, setBusy] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
-  const bereitsZugewiesen = alleEinteilungen.filter(e => e.objekt_id === objektId && e.datum === datum);
-  const zugewieseneIds = new Set(bereitsZugewiesen.map(e => e.mitarbeiter_id));
+  const bereits = alleEinteilungen.filter(e => e.objekt_id === objektId && e.datum === datum);
 
-  // Status pro Mitarbeiter berechnen
   const maStatus = mitarbeiter.map((ma) => {
-    // Bereits in diesem Slot
-    const ownEintrag = bereitsZugewiesen.find(e => e.mitarbeiter_id === ma.id);
+    const ownEintrag = bereits.find(e => e.mitarbeiter_id === ma.id);
     if (ownEintrag) {
-      return { ma, status: 'eingeteilt' as const, info: `${ownEintrag.von.slice(0, 5)}–${ownEintrag.bis.slice(0, 5)}`, eintragId: ownEintrag.id };
+      return { ma, status: 'eingeteilt' as const, info: `${ownEintrag.von.slice(0, 5)}-${ownEintrag.bis.slice(0, 5)}`, eintragId: ownEintrag.id };
     }
-
-    // Urlaub/Krank an diesem Tag?
     const ur = urlaube.find(u =>
-      u.mitarbeiter_id === ma.id &&
-      datum >= u.von && datum <= u.bis &&
-      (u.status === 'genehmigt' || u.status === 'offen')
+      u.mitarbeiter_id === ma.id && datum >= u.von && datum <= u.bis
     );
     if (ur) {
       const typLabel: Record<string, string> = {
@@ -217,16 +182,11 @@ function EinteilenSidebar({ objektId, datum, objekt, mitarbeiter, bgMap, alleEin
         sonderurlaub: 'Sonderurlaub', unbezahlt: 'Unbezahlt frei',
         eltern: 'Elternzeit', fortbildung: 'Fortbildung', sonstiges: 'Abwesend',
       };
-      const note = ur.status === 'genehmigt' ? '' : ' (offen)';
-      return { ma, status: 'abwesend' as const, info: (typLabel[ur.typ] ?? 'Abwesend') + note };
+      return { ma, status: 'abwesend' as const, info: typLabel[ur.typ] ?? 'Abwesend' };
     }
-
-    // Bereits in einem ANDEREN Objekt am selben Tag?
     const anderesObj = alleEinteilungen.find(e =>
       e.mitarbeiter_id === ma.id && e.datum === datum && e.objekt_id !== objektId
     );
-
-    // Regelwerk-Pruefung
     const regeln = (ma.berufsgruppe_id && bgMap[ma.berufsgruppe_id]?.regelwerk) || DEFAULT_REGELN;
     const andere = alleEinteilungen
       .filter(e => e.mitarbeiter_id === ma.id)
@@ -234,17 +194,13 @@ function EinteilenSidebar({ objektId, datum, objekt, mitarbeiter, bgMap, alleEin
     const pruefung = pruefeSchicht({ schicht: { von, bis, datum }, andereEinteilungen: andere }, regeln);
 
     if (anderesObj) {
-      return {
-        ma, status: 'konflikt' as const,
-        info: `Bereits in anderem Objekt eingeteilt (${anderesObj.von.slice(0, 5)}–${anderesObj.bis.slice(0, 5)})`,
-        regelHinweise: pruefung.hinweise,
-      };
+      return { ma, status: 'konflikt' as const, info: `Bereits in anderem Objekt (${anderesObj.von.slice(0, 5)}-${anderesObj.bis.slice(0, 5)})` };
     }
     if (pruefung.sperren.length > 0) {
-      return { ma, status: 'regel-sperre' as const, info: pruefung.sperren[0], regelHinweise: pruefung.hinweise };
+      return { ma, status: 'regel-sperre' as const, info: pruefung.sperren[0] };
     }
     if (pruefung.hinweise.length > 0) {
-      return { ma, status: 'verfuegbar-warn' as const, info: pruefung.hinweise[0], regelHinweise: pruefung.hinweise };
+      return { ma, status: 'verfuegbar-warn' as const, info: pruefung.hinweise[0] };
     }
     return { ma, status: 'verfuegbar' as const, info: '' };
   });
@@ -254,9 +210,103 @@ function EinteilenSidebar({ objektId, datum, objekt, mitarbeiter, bgMap, alleEin
     return `${s.ma.vorname} ${s.ma.nachname}`.toLowerCase().includes(filter.toLowerCase());
   });
 
-  // Sortierung: verfuegbar oben, dann mit-warn, dann konflikt, dann sperre, abwesend, eingeteilt zuletzt
   const sortRank: Record<string, number> = {
     'verfuegbar': 0, 'verfuegbar-warn': 1, 'konflikt': 2, 'regel-sperre': 3, 'abwesend': 4, 'eingeteilt': 5,
   };
   gefiltert.sort((a, b) => {
-    const r = sortRank[a.status] - sortRank[b
+    const r = sortRank[a.status] - sortRank[b.status];
+    if (r !== 0) return r;
+    return a.ma.nachname.localeCompare(b.ma.nachname);
+  });
+
+  async function einplanen(maId: string) {
+    setBusy(maId); setError(null);
+    const supabase = createClient();
+    const { data: profile } = await supabase.from('profiles').select('tenant_id').single();
+    const { error } = await supabase.from('einteilungen').insert({
+      tenant_id: profile?.tenant_id, objekt_id: objektId, mitarbeiter_id: maId, datum, von, bis,
+    });
+    setBusy(null);
+    if (error) { setError(error.message); return; }
+    onSaved();
+  }
+
+  async function ausplanen(eintragId: string) {
+    if (!confirm('Aus Schicht ausplanen?')) return;
+    setBusy(eintragId);
+    const supabase = createClient();
+    const { error } = await supabase.from('einteilungen').delete().eq('id', eintragId);
+    setBusy(null);
+    if (error) { setError(error.message); return; }
+    onSaved();
+  }
+
+  return (
+    <div className="fixed inset-0 z-50 bg-black/60 flex items-stretch justify-end" onClick={onClose}>
+      <div className="bg-bg1 border-l border-border2 w-full max-w-md flex flex-col" onClick={(e) => e.stopPropagation()}>
+        <div className="p-4 border-b border-border1">
+          <div className="flex items-start justify-between">
+            <div>
+              <h2 className="text-base font-bold text-text1">{objekt.name}</h2>
+              <p className="text-text3 text-xs">{new Date(datum + 'T12:00').toLocaleDateString('de-DE', { weekday: 'long', day: '2-digit', month: '2-digit', year: 'numeric' })}</p>
+            </div>
+            <button onClick={onClose} className="text-text3 hover:text-text1 text-xl leading-none px-2">x</button>
+          </div>
+
+          <div className="grid grid-cols-2 gap-2 mt-3">
+            <label className="block">
+              <span className="block text-[10px] uppercase tracking-wide text-text3 mb-1">Von</span>
+              <input type="time" value={von} onChange={(e) => setVon(e.target.value)} className="w-full px-3 py-2 rounded-lg bg-bg2 border border-border1 text-text1 text-sm" />
+            </label>
+            <label className="block">
+              <span className="block text-[10px] uppercase tracking-wide text-text3 mb-1">Bis</span>
+              <input type="time" value={bis} onChange={(e) => setBis(e.target.value)} className="w-full px-3 py-2 rounded-lg bg-bg2 border border-border1 text-text1 text-sm" />
+            </label>
+          </div>
+
+          <input value={filter} onChange={(e) => setFilter(e.target.value)} placeholder="Mitarbeiter suchen..."
+            className="mt-2 w-full px-3 py-2 rounded-lg bg-bg2 border border-border1 text-text1 text-sm" />
+
+          {error && <div className="mt-2 rounded border border-red-700 bg-[var(--red-dim)] text-[var(--red)] p-2 text-xs">{error}</div>}
+          <p className="text-text3 text-[10px] mt-2">
+            Gruen = einplanbar, Gelb = mit Hinweis, Rot = blockiert, Blau = bereits eingeteilt
+          </p>
+        </div>
+
+        <div className="flex-1 overflow-y-auto p-3 space-y-1.5">
+          {gefiltert.length === 0 && <div className="text-center text-text3 text-sm py-6">Kein Mitarbeiter gefunden.</div>}
+          {gefiltert.map(({ ma, status, info, eintragId }: any) => {
+            const farbe =
+              status === 'verfuegbar' ? 'border-green-700 bg-[var(--green-dim)] hover:bg-green-900/40' :
+              status === 'verfuegbar-warn' ? 'border-amber-700 bg-[var(--amber-dim)] hover:bg-amber-900/40' :
+              status === 'eingeteilt' ? 'border-accent bg-[var(--accent-dim)]' :
+              status === 'konflikt' ? 'border-red-700 bg-[var(--red-dim)] opacity-80' :
+              status === 'regel-sperre' ? 'border-red-700 bg-[var(--red-dim)] opacity-80' :
+              'border-border2 bg-bg2 opacity-60';
+            const klickbar = status === 'verfuegbar' || status === 'verfuegbar-warn';
+            const istAusplanbar = status === 'eingeteilt' && eintragId;
+            const onClick = klickbar ? () => einplanen(ma.id) : istAusplanbar ? () => ausplanen(eintragId) : undefined;
+            const bg = ma.berufsgruppe_id ? bgMap[ma.berufsgruppe_id]?.name : null;
+
+            return (
+              <button key={ma.id} disabled={!onClick || busy === ma.id || busy === eintragId} onClick={onClick}
+                className={`w-full text-left p-2.5 rounded-lg border ${farbe} transition-colors disabled:cursor-not-allowed`}>
+                <div className="flex items-center justify-between">
+                  <div className="min-w-0">
+                    <div className="text-text1 text-sm font-semibold truncate">
+                      {ma.vorname} {ma.nachname}
+                      {bg && <span className="text-text3 text-[10px] ml-1">- {bg}</span>}
+                    </div>
+                    {info && <div className="text-text2 text-[11px] mt-0.5">{info}</div>}
+                  </div>
+                  {status === 'eingeteilt' && <span className="text-[var(--red)] text-xs ml-2">x ausplanen</span>}
+                  {klickbar && <span className="text-[var(--green)] text-xs ml-2">+ einplanen</span>}
+                </div>
+              </button>
+            );
+          })}
+        </div>
+      </div>
+    </div>
+  );
+}

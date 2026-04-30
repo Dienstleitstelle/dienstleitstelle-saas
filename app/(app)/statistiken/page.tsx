@@ -18,7 +18,6 @@ export default async function StatistikenPage() {
   const heute = new Date();
   const monatStart = new Date(heute.getFullYear(), heute.getMonth(), 1).toISOString().slice(0, 10);
   const vor30 = new Date(Date.now() - 30 * 86400000).toISOString().slice(0, 10);
-  const heuteStr = heute.toISOString().slice(0, 10);
 
   const [
     { data: einteilungenMonat },
@@ -38,17 +37,18 @@ export default async function StatistikenPage() {
     supabase.from('urlaube').select('mitarbeiter_id, tage').eq('typ', 'krank').gte('von', vor30),
   ]);
 
-  // Stunden pro MA
+  // Stunden pro MA: Ist-Zeiten haben Vorrang, Plan als Fallback PRO MA.
   const stundenProMa: Record<string, number> = {};
+  const maMitZeiten = new Set<string>();
   for (const z of zeitenMonat ?? []) {
     const h = dauerH(z.von, z.bis, z.pause_min || 0);
     stundenProMa[z.mitarbeiter_id] = (stundenProMa[z.mitarbeiter_id] || 0) + h;
+    maMitZeiten.add(z.mitarbeiter_id);
   }
   for (const e of einteilungenMonat ?? []) {
+    if (maMitZeiten.has(e.mitarbeiter_id)) continue;
     const h = dauerH(e.von, e.bis);
-    if (!zeitenMonat?.length) {
-      stundenProMa[e.mitarbeiter_id] = (stundenProMa[e.mitarbeiter_id] || 0) + h;
-    }
+    stundenProMa[e.mitarbeiter_id] = (stundenProMa[e.mitarbeiter_id] || 0) + h;
   }
 
   const maMap = Object.fromEntries((ma ?? []).map((m: any) => [m.id, m]));
@@ -60,7 +60,6 @@ export default async function StatistikenPage() {
   const summeStunden = stundenListe.reduce((s, x) => s + x.stunden, 0);
   const summeLohn = stundenListe.reduce((s, x) => s + x.lohn, 0);
 
-  // Auslastung pro Objekt (Summe geplante Stunden im Monat)
   const objMap = Object.fromEntries((objekte ?? []).map((o: any) => [o.id, o.name]));
   const objStunden: Record<string, number> = {};
   for (const e of einteilungenMonat ?? []) {
@@ -72,16 +71,13 @@ export default async function StatistikenPage() {
     .sort((a, b) => b.stunden - a.stunden);
   const maxObj = Math.max(1, ...objListe.map(o => o.stunden));
 
-  // Krankenstand
   const krankTage = (krankheiten30 ?? []).reduce((s: number, k: any) => s + Number(k.tage || 0), 0);
   const aktiveMa = (ma ?? []).length;
   const krankenstandProz = aktiveMa > 0 ? (krankTage / (aktiveMa * 30)) * 100 : 0;
 
-  // Urlaubsanträge
   const offUrlaub = (urlaube30 ?? []).filter((u: any) => u.status === 'offen').length;
   const genehmigteUrlaub = (urlaube30 ?? []).filter((u: any) => u.status === 'genehmigt').length;
 
-  // Vorfälle
   const offVorfaelle = (berichte30 ?? []).filter((b: any) => b.status === 'offen').length;
   const kritisch = (berichte30 ?? []).filter((b: any) => b.schweregrad >= 4).length;
 
@@ -89,22 +85,22 @@ export default async function StatistikenPage() {
     <div className="space-y-6">
       <div>
         <h1 className="text-xl font-bold text-text1">Statistiken</h1>
-        <p className="text-text3 text-sm mt-1">Letzte 30 Tage / aktueller Monat. Stand: {new Date().toLocaleString('de-DE')}.</p>
+        <p className="text-text3 text-sm mt-1">Aktueller Monat / letzte 30 Tage. Stand: {new Date().toLocaleString('de-DE')}.</p>
       </div>
 
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
         <Stat label="Stunden im Monat" value={summeStunden.toFixed(1)} hint="Gesamt geplant + erfasst" />
-        <Stat label="Lohnkosten brutto" value={'€ ' + summeLohn.toFixed(2)} hint="Anhand hinterl. Stundenlohn" />
-        <Stat label="Krankenstand 30T" value={krankenstandProz.toFixed(1) + ' %'} hint={`${krankTage} Krankheitstage`} />
-        <Stat label="Offene Anträge" value={offUrlaub} hint={`${genehmigteUrlaub} genehmigt`} />
+        <Stat label="Lohnkosten brutto" value={'EUR ' + summeLohn.toFixed(2)} hint="Anhand hinterl. Stundenlohn" />
+        <Stat label="Krankenstand 30T" value={krankenstandProz.toFixed(1) + ' %'} hint={krankTage + ' Krankheitstage'} />
+        <Stat label="Offene Antraege" value={offUrlaub} hint={genehmigteUrlaub + ' genehmigt'} />
         <Stat label="Aktive Mitarbeiter" value={aktiveMa} />
         <Stat label="Aktive Objekte" value={(objekte ?? []).length} />
-        <Stat label="Vorfälle 30T" value={(berichte30 ?? []).length} hint={`${kritisch} kritisch`} />
-        <Stat label="Offene Vorfälle" value={offVorfaelle} />
+        <Stat label="Vorfaelle 30T" value={(berichte30 ?? []).length} hint={kritisch + ' kritisch'} />
+        <Stat label="Offene Vorfaelle" value={offVorfaelle} />
       </div>
 
       <div className="grid md:grid-cols-2 gap-4">
-        <Card title="Top 10 Mitarbeiter — Stunden im Monat">
+        <Card title="Top 10 Mitarbeiter - Stunden im Monat">
           {stundenListe.length === 0 ? (
             <Empty>Keine Daten.</Empty>
           ) : (
@@ -124,7 +120,7 @@ export default async function StatistikenPage() {
           )}
         </Card>
 
-        <Card title="Auslastung pro Objekt — Stunden im Monat">
+        <Card title="Auslastung pro Objekt - Stunden im Monat">
           {objListe.length === 0 ? (
             <Empty>Keine Daten.</Empty>
           ) : (
@@ -146,7 +142,7 @@ export default async function StatistikenPage() {
       </div>
 
       <p className="text-text3 text-xs">
-        Lohnkosten‑Berechnung ist eine Schätzung anhand des hinterlegten Stundenlohns. Tatsächliche Lohnabrechnung erfolgt durch deine Lohnbuchhaltung.
+        Lohnkosten-Berechnung ist eine Schaetzung anhand des hinterlegten Stundenlohns. Tatsaechliche Lohnabrechnung erfolgt durch deine Lohnbuchhaltung.
       </p>
     </div>
   );

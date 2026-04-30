@@ -3,7 +3,12 @@ import { BerichteClient } from './client';
 
 export default async function BerichtePage() {
   const supabase = await createClient();
-  const [{ data: vorlagen }, { data: eintraege }, { data: objekte }] = await Promise.all([
+  const { data: { user } } = await supabase.auth.getUser();
+  const { data: profile } = await supabase
+    .from('profiles').select('rolle').eq('id', user?.id ?? '').maybeSingle();
+  const rolle = profile?.rolle ?? 'mitarbeiter';
+
+  const [{ data: alleVorlagen }, { data: eintraege }, { data: objekte }] = await Promise.all([
     supabase.from('berichts_vorlagen').select('*').eq('aktiv', true).order('name'),
     supabase.from('berichts_eintraege')
       .select('*, vorlage:vorlage_id(name, zweck), objekt:objekt_id(name), ersteller:created_by(vorname, nachname)')
@@ -11,5 +16,10 @@ export default async function BerichtePage() {
       .limit(50),
     supabase.from('objekte').select('id, name').eq('aktiv', true).order('name'),
   ]);
-  return <BerichteClient vorlagen={(vorlagen ?? []) as any} eintraege={(eintraege ?? []) as any} objekte={(objekte ?? []) as any} />;
+
+  const vorlagen = (alleVorlagen ?? []).filter((v: any) =>
+    rolle === 'admin' || v.rolle_pflicht === 'alle' || v.rolle_pflicht === rolle
+  );
+
+  return <BerichteClient vorlagen={vorlagen as any} eintraege={(eintraege ?? []) as any} objekte={(objekte ?? []) as any} />;
 }

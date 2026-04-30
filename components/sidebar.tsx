@@ -15,26 +15,23 @@ interface NavItem {
 }
 
 const NAV: NavItem[] = [
-  // Übersicht
-  { section: 'Übersicht', label: 'Dashboard',       href: '/dashboard',     icon: '📊', rollen: ['admin','leitung','mitarbeiter'] },
-  { section: 'Übersicht', label: 'Dienstplan',      href: '/dienstplan',    icon: '📅', rollen: ['admin','leitung','mitarbeiter'] },
-  { section: 'Übersicht', label: 'Schwarzes Brett', href: '/pinnwand',      icon: '📌', rollen: ['admin','leitung','mitarbeiter'] },
-  { section: 'Übersicht', label: 'Abwesenheit',     href: '/abwesenheit',   icon: '🏖️', rollen: ['admin','leitung','mitarbeiter'] },
-  { section: 'Übersicht', label: 'Aufgaben',        href: '/aufgaben',      icon: '✅', rollen: ['admin','leitung','mitarbeiter'] },
-  { section: 'Übersicht', label: 'Berichte',        href: '/berichte',      icon: '📝', rollen: ['admin','leitung','mitarbeiter'] },
-  { section: 'Übersicht', label: 'Zeiterfassung',   href: '/zeiterfassung', icon: '⏱️', rollen: ['admin','leitung','mitarbeiter'] },
+  { section: 'Uebersicht', label: 'Dashboard',       href: '/dashboard',     icon: 'DA', rollen: ['admin','leitung','mitarbeiter'] },
+  { section: 'Uebersicht', label: 'Dienstplan',      href: '/dienstplan',    icon: 'DP', rollen: ['admin','leitung','mitarbeiter'] },
+  { section: 'Uebersicht', label: 'Schwarzes Brett', href: '/pinnwand',      icon: 'SB', rollen: ['admin','leitung','mitarbeiter'] },
+  { section: 'Uebersicht', label: 'Abwesenheit',     href: '/abwesenheit',   icon: 'AB', rollen: ['admin','leitung','mitarbeiter'] },
+  { section: 'Uebersicht', label: 'Aufgaben',        href: '/aufgaben',      icon: 'AU', rollen: ['admin','leitung','mitarbeiter'] },
+  { section: 'Uebersicht', label: 'Berichte',        href: '/berichte',      icon: 'BR', rollen: ['admin','leitung','mitarbeiter'] },
+  { section: 'Uebersicht', label: 'Zeiterfassung',   href: '/zeiterfassung', icon: 'ZE', rollen: ['admin','leitung','mitarbeiter'] },
 
-  // Verwaltung (Admin + Leitung)
-  { section: 'Verwaltung', label: 'Mitarbeiter',     href: '/mitarbeiter',     icon: '👥', rollen: ['admin','leitung'] },
-  { section: 'Verwaltung', label: 'Objekte',         href: '/objekte',         icon: '🏢', rollen: ['admin','leitung'] },
-  { section: 'Verwaltung', label: 'Vertretung',      href: '/vertretung',      icon: '🪑', rollen: ['admin','leitung'] },
-  { section: 'Verwaltung', label: 'Statistiken',     href: '/statistiken',     icon: '📈', rollen: ['admin','leitung'] },
+  { section: 'Verwaltung', label: 'Mitarbeiter',     href: '/mitarbeiter',     icon: 'MA', rollen: ['admin','leitung'] },
+  { section: 'Verwaltung', label: 'Objekte',         href: '/objekte',         icon: 'OB', rollen: ['admin','leitung'] },
+  { section: 'Verwaltung', label: 'Vertretung',      href: '/vertretung',      icon: 'VT', rollen: ['admin','leitung'] },
+  { section: 'Verwaltung', label: 'Statistiken',     href: '/statistiken',     icon: 'ST', rollen: ['admin','leitung'] },
 
-  // Einstellungen (Admin)
-  { section: 'Einstellungen', label: 'Übersicht',          href: '/einstellungen',                       icon: '⚙️', rollen: ['admin'] },
-  { section: 'Einstellungen', label: 'Berufsgruppen',      href: '/einstellungen/berufsgruppen',         icon: '👔', rollen: ['admin'] },
-  { section: 'Einstellungen', label: 'Berichts-Vorlagen',  href: '/einstellungen/berichts-vorlagen',     icon: '📋', rollen: ['admin'] },
-  { section: 'Einstellungen', label: 'Team einladen',      href: '/einladungen',                         icon: '✉️', rollen: ['admin'] },
+  { section: 'Einstellungen', label: 'Uebersicht',          href: '/einstellungen',                       icon: 'EI', rollen: ['admin'] },
+  { section: 'Einstellungen', label: 'Berufsgruppen',       href: '/einstellungen/berufsgruppen',         icon: 'BG', rollen: ['admin'] },
+  { section: 'Einstellungen', label: 'Berichts-Vorlagen',   href: '/einstellungen/berichts-vorlagen',     icon: 'BV', rollen: ['admin'] },
+  { section: 'Einstellungen', label: 'Team einladen',       href: '/einladungen',                         icon: 'TE', rollen: ['admin'] },
 ];
 
 interface SidebarProps {
@@ -63,22 +60,16 @@ export function Sidebar({ rolle, vorname, nachname, firma }: SidebarProps) {
 
   return (
     <>
-      {/* Mobile-Topbar */}
       <div className="md:hidden flex items-center justify-between px-4 h-12 border-b border-border1 bg-bg1 sticky top-0 z-40">
-        <button onClick={() => setOpen(!open)} className="text-text1 text-xl" aria-label="Menü">☰</button>
+        <button onClick={() => setOpen(!open)} className="text-text1 text-xl" aria-label="Menue">=</button>
         <div className="text-sm font-bold text-text1">Dienst<span className="text-accent">Leitstelle</span></div>
         <div className="w-7 h-7 rounded-full bg-[var(--accent-dim2)] text-accent flex items-center justify-center text-[10px] font-bold">
           {initials}
         </div>
       </div>
 
-      {/* Sidebar */}
       <aside
-        className={`
-          fixed md:sticky md:top-0 inset-y-0 left-0 z-50 w-60 bg-bg1 border-r border-border1
-          flex flex-col h-screen transform transition-transform
-          ${open ? 'translate-x-0' : '-translate-x-full'} md:translate-x-0
-        `}
+        className={`fixed md:sticky md:top-0 inset-y-0 left-0 z-50 w-60 bg-bg1 border-r border-border1 flex flex-col h-screen transform transition-transform ${open ? 'translate-x-0' : '-translate-x-full'} md:translate-x-0`}
       >
         <div className="p-4 border-b border-border1">
           <div className="text-base font-bold text-text1">Dienst<span className="text-accent">Leitstelle</span></div>
@@ -98,7 +89,7 @@ export function Sidebar({ rolle, vorname, nachname, firma }: SidebarProps) {
                       className={`flex items-center gap-2 px-3 py-2 rounded-lg text-[13px] mb-0.5 ${
                         active ? 'bg-[var(--accent-dim2)] text-accent font-semibold' : 'text-text2 hover:bg-bg3 hover:text-text1'
                       }`}>
-                      <span className="w-4 text-center">{it.icon}</span>
+                      <span className="w-6 text-center text-[10px] font-bold tracking-wide">{it.icon}</span>
                       <span>{it.label}</span>
                     </Link>
                   );
@@ -113,4 +104,18 @@ export function Sidebar({ rolle, vorname, nachname, firma }: SidebarProps) {
               {initials}
             </div>
             <div className="min-w-0">
-              <div className="text-[12p
+              <div className="text-[12px] font-medium text-text1 truncate">{vorname} {nachname}</div>
+              <div className="text-[10px] text-text3 capitalize">{rolle}</div>
+            </div>
+          </div>
+          <button onClick={logout}
+            className="w-full text-[11px] py-1.5 rounded-md border border-border2 text-text3 hover:text-text1 hover:bg-bg3">
+            Abmelden
+          </button>
+        </div>
+      </aside>
+
+      {open && <div onClick={() => setOpen(false)} className="md:hidden fixed inset-0 bg-black/50 z-40" />}
+    </>
+  );
+}

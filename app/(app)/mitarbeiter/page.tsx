@@ -5,4 +5,7 @@ export default async function MitarbeiterPage() {
   const supabase = await createClient();
   const [{ data: ma }, { data: bg }] = await Promise.all([
     supabase.from('mitarbeiter').select('*').order('nachname'),
-    supabase.from('berufsgruppen
+    supabase.from('berufsgruppen').select('id, name').order('name'),
+  ]);
+  return <MitarbeiterClient initial={ma ?? []} berufsgruppen={(bg ?? []) as any} />;
+}
