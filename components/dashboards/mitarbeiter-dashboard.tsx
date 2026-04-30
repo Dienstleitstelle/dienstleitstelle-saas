@@ -189,4 +189,3 @@ function Card({ title, children, countBadge, className }: { title: string; child
 function Empty({ children }: { children: React.ReactNode }) {
   return <div className="text-text3 text-sm py-3 text-center">{children}</div>;
 }
-     
