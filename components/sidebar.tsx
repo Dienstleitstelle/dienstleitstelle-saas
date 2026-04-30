@@ -28,6 +28,7 @@ const NAV: NavItem[] = [
   { section: 'Verwaltung', label: 'Mitarbeiter',     href: '/mitarbeiter',     icon: '👥', rollen: ['admin','leitung'] },
   { section: 'Verwaltung', label: 'Objekte',         href: '/objekte',         icon: '🏢', rollen: ['admin','leitung'] },
   { section: 'Verwaltung', label: 'Vertretung',      href: '/vertretung',      icon: '🪑', rollen: ['admin','leitung'] },
+  { section: 'Verwaltung', label: 'Statistiken',     href: '/statistiken',     icon: '📈', rollen: ['admin','leitung'] },
 
   // Einstellungen (Admin)
   { section: 'Einstellungen', label: 'Übersicht',          href: '/einstellungen',                       icon: '⚙️', rollen: ['admin'] },
@@ -112,5 +113,4 @@ export function Sidebar({ rolle, vorname, nachname, firma }: SidebarProps) {
               {initials}
             </div>
             <div className="min-w-0">
-              <div className="text-[12px] font-medium text-text1 truncate">{vorname} {nachname}</div>
-              <div className="text-[10px] text-text3 capitali
+              <div className="text-[12p

@@ -1,5 +1,6 @@
 'use client';
 
+import Link from 'next/link';
 import { useState } from 'react';
 import { createClient } from '@/lib/supabase/client';
 
@@ -83,7 +84,8 @@ export function BerichteClient({ vorlagen, eintraege, objekte }: {
             ) : (
               <ul className="space-y-2">
                 {gefiltert.map((e: any) => (
-                  <li key={e.id} className="bg-bg1 border border-border1 rounded-xl p-3">
+                  <li key={e.id}>
+                    <Link href={`/berichte/${e.id}`} className="block bg-bg1 border border-border1 rounded-xl p-3 hover:border-accent transition-colors">
                     <div className="flex items-start gap-3">
                       <span className="text-xl">{ZWECK_ICON[e.vorlage?.zweck] ?? '📋'}</span>
                       <div className="min-w-0 flex-1">
@@ -103,6 +105,7 @@ export function BerichteClient({ vorlagen, eintraege, objekte }: {
                       </div>
                       <StatusBadge status={e.status} />
                     </div>
+                    </Link>
                   </li>
                 ))}
               </ul>
@@ -286,6 +289,4 @@ function StatusBadge({ status }: { status: string }) {
 }
 
 const inputCls = 'w-full px-3 py-2 rounded-lg bg-bg2 border border-border1 text-text1 text-sm outline-none focus:border-accent';
-function Label({ children }: { children: React.ReactNode }) {
-  return <span className="block text-[10px] uppercase tracking-wide text-text3 mb-1">{children}</span>;
-}
+function Lab
