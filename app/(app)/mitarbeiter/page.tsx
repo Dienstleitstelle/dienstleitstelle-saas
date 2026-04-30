@@ -3,9 +3,6 @@ import { MitarbeiterClient } from './client';
 
 export default async function MitarbeiterPage() {
   const supabase = await createClient();
-  const { data } = await supabase
-    .from('mitarbeiter')
-    .select('*')
-    .order('nachname');
-  return <MitarbeiterClient initial={data ?? []} />;
-}
+  const [{ data: ma }, { data: bg }] = await Promise.all([
+    supabase.from('mitarbeiter').select('*').order('nachname'),
+    supabase.from('berufsgruppen

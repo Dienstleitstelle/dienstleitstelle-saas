@@ -28,8 +28,9 @@ const NAV: NavItem[] = [
   { section: 'Dokumentation', label: 'Berichte',  href: '/berichte',        icon: '📋', rollen: ['admin','leitung','mitarbeiter'] },
   { section: 'Dokumentation', label: 'Schwarzes Brett', href: '/pinnwand',  icon: '📌', rollen: ['admin','leitung','mitarbeiter'] },
 
-  { section: 'Konto', label: 'Team einladen',     href: '/einladungen',     icon: '✉️', rollen: ['admin'] },
-  { section: 'Konto', label: 'Einstellungen',     href: '/einstellungen',   icon: '⚙️', rollen: ['admin'] },
+  { section: 'Einstellungen', label: 'Übersicht',       href: '/einstellungen',                  icon: '⚙️', rollen: ['admin'] },
+  { section: 'Einstellungen', label: 'Berufsgruppen',   href: '/einstellungen/berufsgruppen',    icon: '👔', rollen: ['admin'] },
+  { section: 'Einstellungen', label: 'Team einladen',   href: '/einladungen',                    icon: '✉️', rollen: ['admin'] },
 ];
 
 interface SidebarProps {
@@ -141,13 +142,4 @@ export function Sidebar({ rolle, vorname, nachname, firma }: SidebarProps) {
         </div>
       </aside>
 
-      {/* Backdrop für Mobile */}
-      {open && (
-        <div
-          onClick={() => setOpen(false)}
-          className="md:hidden fixed inset-0 bg-black/50 z-40"
-        />
-      )}
-    </>
-  );
-}
+      {/* Backdrop für Mobil
