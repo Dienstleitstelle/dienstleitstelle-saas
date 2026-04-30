@@ -3,6 +3,8 @@
 import { useState } from 'react';
 import { createClient } from '@/lib/supabase/client';
 
+type Rolle = 'admin' | 'leitung' | 'mitarbeiter';
+
 interface MA {
   id: string; vorname: string; nachname: string;
   email: string | null; telefon: string | null; position: string | null;
@@ -13,9 +15,14 @@ interface MA {
   eintrittsdatum: string | null;
   jahresurlaub_tage: number | null;
   lohn_pro_stunde: number | null;
+  user_id: string | null;
   aktiv: boolean;
 }
 interface Berufsgruppe { id: string; name: string }
+interface Einladung {
+  id: string; mitarbeiter_id: string | null; email: string;
+  token: string; accepted_at: string | null; expires_at: string; rolle: Rolle;
+}
 
 const VERTRAG_BADGE: Record<MA['vertrag'], string> = {
   Vollzeit: 'bg-[var(--accent-dim2)] text-accent',
@@ -24,23 +31,53 @@ const VERTRAG_BADGE: Record<MA['vertrag'], string> = {
   Aushilfe: 'bg-bg3 text-text2',
 };
 
-export function MitarbeiterClient({ initial, berufsgruppen }: { initial: MA[]; berufsgruppen: Berufsgruppe[] }) {
+export function MitarbeiterClient({ initial, berufsgruppen, offeneEinladungen }: {
+  initial: MA[]; berufsgruppen: Berufsgruppe[]; offeneEinladungen: Einladung[];
+}) {
   const [list, setList] = useState<MA[]>(initial);
+  const [invites, setInvites] = useState<Einladung[]>(offeneEinladungen);
   const [edit, setEdit] = useState<Partial<MA> | null>(null);
   const [filter, setFilter] = useState('');
+  const [resending, setResending] = useState<string | null>(null);
 
   async function reload() {
     const supabase = createClient();
-    const { data } = await supabase.from('mitarbeiter').select('*').order('nachname');
-    setList((data ?? []) as MA[]);
+    const [{ data: m }, { data: i }] = await Promise.all([
+      supabase.from('mitarbeiter').select('*').order('nachname'),
+      supabase.from('invitations').select('id, mitarbeiter_id, email, token, accepted_at, expires_at, rolle').is('accepted_at', null),
+    ]);
+    setList((m ?? []) as MA[]);
+    setInvites((i ?? []) as Einladung[]);
   }
 
   async function del(id: string) {
-    if (!confirm('Mitarbeiter wirklich loeschen?')) return;
+    if (!confirm('Mitarbeiter wirklich loeschen? Damit wird auch der Login-Account ggf. entkoppelt.')) return;
     const supabase = createClient();
     const { error } = await supabase.from('mitarbeiter').delete().eq('id', id);
     if (error) alert(error.message);
     else reload();
+  }
+
+  async function einladen(ma: MA, rolle: Rolle = 'mitarbeiter') {
+    if (!ma.email) { alert('Mitarbeiter hat keine E-Mail. Bitte erst eine E-Mail in den Stammdaten hinterlegen.'); return; }
+    setResending(ma.id);
+    try {
+      const res = await fetch('/api/mitarbeiter/einladen', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ mitarbeiter_id: ma.id, email: ma.email, vorname: ma.vorname, nachname: ma.nachname, rolle }),
+      });
+      const data = await res.json();
+      if (!res.ok) { alert(data?.error ?? 'Fehler'); return; }
+      if (data.warnung) {
+        if (confirm(data.warnung + '\n\nLink in die Zwischenablage kopieren?')) {
+          navigator.clipboard.writeText(data.invite_link);
+        }
+      } else {
+        alert('Einladung an ' + ma.email + ' verschickt.');
+      }
+      reload();
+    } finally { setResending(null); }
   }
 
   const gefiltert = list.filter(m => {
@@ -55,11 +92,15 @@ export function MitarbeiterClient({ initial, berufsgruppen }: { initial: MA[]; b
 
   const bgMap = Object.fromEntries(berufsgruppen.map(b => [b.id, b.name]));
   const maMap = Object.fromEntries(list.map(m => [m.id, `${m.vorname} ${m.nachname}`]));
+  const inviteByMa = Object.fromEntries(invites.filter(i => i.mitarbeiter_id).map(i => [i.mitarbeiter_id!, i]));
 
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between gap-2 flex-wrap">
-        <h1 className="text-xl font-bold text-text1">Mitarbeiter</h1>
+        <div>
+          <h1 className="text-xl font-bold text-text1">Mitarbeiter</h1>
+          <p className="text-text3 text-sm mt-1">Beim Anlegen mit E-Mail wird automatisch eine Login-Einladung verschickt.</p>
+        </div>
         <div className="flex items-center gap-2">
           <input value={filter} onChange={(e) => setFilter(e.target.value)} placeholder="Suchen..."
             className="px-3 py-1.5 rounded-lg bg-bg2 border border-border1 text-text1 text-sm w-48" />
@@ -79,34 +120,61 @@ export function MitarbeiterClient({ initial, berufsgruppen }: { initial: MA[]; b
                 <th className="text-left px-3 py-2">Position</th>
                 <th className="text-left px-3 py-2">Berufsgruppe</th>
                 <th className="text-left px-3 py-2">Vertrag</th>
+                <th className="text-left px-3 py-2">Login-Status</th>
                 <th className="text-left px-3 py-2">Vorgesetzter</th>
                 <th className="text-right px-3 py-2">Aktion</th>
               </tr>
             </thead>
             <tbody>
               {gefiltert.length === 0 && (
-                <tr><td colSpan={6} className="text-center text-text3 py-6 text-sm">
+                <tr><td colSpan={7} className="text-center text-text3 py-6 text-sm">
                   {list.length === 0 ? 'Noch keine Mitarbeiter angelegt.' : 'Kein Treffer.'}
                 </td></tr>
               )}
-              {gefiltert.map((m) => (
-                <tr key={m.id} className="border-t border-border1 hover:bg-bg2">
-                  <td className="px-3 py-2 text-text1 font-medium">
-                    {m.vorname} {m.nachname}
-                    {m.email && <div className="text-[10px] text-text3">{m.email}</div>}
-                  </td>
-                  <td className="px-3 py-2 text-text2">{m.position ?? '-'}</td>
-                  <td className="px-3 py-2 text-text2">{m.berufsgruppe_id ? bgMap[m.berufsgruppe_id] ?? '-' : '-'}</td>
-                  <td className="px-3 py-2">
-                    <span className={`text-xs px-2 py-0.5 rounded-full ${VERTRAG_BADGE[m.vertrag]}`}>{m.vertrag}</span>
-                  </td>
-                  <td className="px-3 py-2 text-text2 text-xs">{m.vorgesetzter_id ? maMap[m.vorgesetzter_id] ?? '-' : '-'}</td>
-                  <td className="px-3 py-2 text-right whitespace-nowrap">
-                    <button onClick={() => setEdit(m)} className="text-xs px-2 py-1 rounded border border-border2 text-text2 hover:text-text1 mr-1">Bearbeiten</button>
-                    <button onClick={() => del(m.id)} className="text-xs px-2 py-1 rounded border border-red-700 text-[var(--red)]">Loeschen</button>
-                  </td>
-                </tr>
-              ))}
+              {gefiltert.map((m) => {
+                const inv = inviteByMa[m.id];
+                const expired = inv ? new Date(inv.expires_at) < new Date() : false;
+                let statusLabel = 'Kein Login';
+                let statusCls = 'bg-bg3 text-text3';
+                if (m.user_id) { statusLabel = 'Aktiv'; statusCls = 'bg-[var(--green-dim)] text-[var(--green)]'; }
+                else if (inv && !expired) { statusLabel = 'Eingeladen'; statusCls = 'bg-[var(--amber-dim)] text-[var(--amber)]'; }
+                else if (inv && expired) { statusLabel = 'Einladung abgelaufen'; statusCls = 'bg-[var(--red-dim)] text-[var(--red)]'; }
+
+                const inviteLink = inv ? `${typeof window !== 'undefined' ? window.location.origin : ''}/invite/${inv.token}` : null;
+
+                return (
+                  <tr key={m.id} className="border-t border-border1 hover:bg-bg2">
+                    <td className="px-3 py-2 text-text1 font-medium">
+                      {m.vorname} {m.nachname}
+                      {m.email && <div className="text-[10px] text-text3">{m.email}</div>}
+                    </td>
+                    <td className="px-3 py-2 text-text2">{m.position ?? '-'}</td>
+                    <td className="px-3 py-2 text-text2">{m.berufsgruppe_id ? bgMap[m.berufsgruppe_id] ?? '-' : '-'}</td>
+                    <td className="px-3 py-2">
+                      <span className={`text-xs px-2 py-0.5 rounded-full ${VERTRAG_BADGE[m.vertrag]}`}>{m.vertrag}</span>
+                    </td>
+                    <td className="px-3 py-2">
+                      <span className={`text-xs px-2 py-0.5 rounded-full ${statusCls}`}>{statusLabel}</span>
+                      {inviteLink && !m.user_id && (
+                        <button onClick={() => navigator.clipboard.writeText(inviteLink)} className="block text-[10px] text-accent mt-0.5 hover:underline" title={inviteLink}>
+                          Link kopieren
+                        </button>
+                      )}
+                    </td>
+                    <td className="px-3 py-2 text-text2 text-xs">{m.vorgesetzter_id ? maMap[m.vorgesetzter_id] ?? '-' : '-'}</td>
+                    <td className="px-3 py-2 text-right whitespace-nowrap">
+                      {!m.user_id && m.email && (
+                        <button onClick={() => einladen(m)} disabled={resending === m.id}
+                          className="text-xs px-2 py-1 rounded border border-accent text-accent hover:bg-[var(--accent-dim2)] mr-1 disabled:opacity-50">
+                          {resending === m.id ? '...' : (inv ? 'Erneut einladen' : 'Einladen')}
+                        </button>
+                      )}
+                      <button onClick={() => setEdit(m)} className="text-xs px-2 py-1 rounded border border-border2 text-text2 hover:text-text1 mr-1">Bearbeiten</button>
+                      <button onClick={() => del(m.id)} className="text-xs px-2 py-1 rounded border border-red-700 text-[var(--red)]">Loeschen</button>
+                    </td>
+                  </tr>
+                );
+              })}
             </tbody>
           </table>
         </div>
@@ -136,14 +204,18 @@ function MaModal({ werte, berufsgruppen, alleMa, onClose, onSaved }: {
   const [eintrittsdatum, setEintrittsdatum] = useState(werte.eintrittsdatum ?? '');
   const [jahresurlaubTage, setJahresurlaubTage] = useState<string>(werte.jahresurlaub_tage?.toString() ?? '');
   const [lohnProStunde, setLohnProStunde] = useState<string>(werte.lohn_pro_stunde?.toString() ?? '');
+  const [rolle, setRolle] = useState<Rolle>('mitarbeiter');
+  const [einladenSenden, setEinladenSenden] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [info, setInfo] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
+  const istNeu = !werte.id;
   const vorgesetzteOptionen = alleMa.filter(m => m.id !== werte.id);
 
   async function save(e: React.FormEvent) {
     e.preventDefault();
-    setError(null); setLoading(true);
+    setError(null); setInfo(null); setLoading(true);
     const supabase = createClient();
     const { data: profile } = await supabase.from('profiles').select('tenant_id').single();
     const payload: any = {
@@ -158,12 +230,46 @@ function MaModal({ werte, berufsgruppen, alleMa, onClose, onSaved }: {
       jahresurlaub_tage: jahresurlaubTage === '' ? null : Number(jahresurlaubTage),
       lohn_pro_stunde: lohnProStunde === '' ? null : Number(lohnProStunde),
     };
-    const op = werte.id
-      ? supabase.from('mitarbeiter').update(payload).eq('id', werte.id)
-      : supabase.from('mitarbeiter').insert(payload);
-    const { error } = await op;
+
+    let maId = werte.id;
+    if (werte.id) {
+      const { error } = await supabase.from('mitarbeiter').update(payload).eq('id', werte.id);
+      if (error) { setError(error.message); setLoading(false); return; }
+    } else {
+      const { data, error } = await supabase.from('mitarbeiter').insert(payload).select('id').single();
+      if (error) { setError(error.message); setLoading(false); return; }
+      maId = data.id;
+    }
+
+    // Auto-Einladung beim Anlegen, falls E-Mail dabei und Haken gesetzt
+    if (istNeu && email && einladenSenden) {
+      try {
+        const res = await fetch('/api/mitarbeiter/einladen', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ mitarbeiter_id: maId, email, vorname, nachname, rolle }),
+        });
+        const j = await res.json();
+        if (!res.ok) {
+          setLoading(false);
+          setInfo('Mitarbeiter angelegt, aber Einladung fehlgeschlagen: ' + (j?.error ?? 'unbekannt'));
+          setTimeout(() => onSaved(), 2000);
+          return;
+        }
+        if (j.warnung) {
+          if (confirm(j.warnung + '\n\nLink in die Zwischenablage kopieren?')) {
+            navigator.clipboard.writeText(j.invite_link);
+          }
+        }
+      } catch (e: any) {
+        setInfo('Mitarbeiter angelegt. Einladung-Versand fehlgeschlagen: ' + e?.message);
+        setLoading(false);
+        setTimeout(() => onSaved(), 2000);
+        return;
+      }
+    }
+
     setLoading(false);
-    if (error) { setError(error.message); return; }
     onSaved();
   }
 
@@ -172,6 +278,7 @@ function MaModal({ werte, berufsgruppen, alleMa, onClose, onSaved }: {
       <form onSubmit={save} className="bg-bg1 border border-border2 rounded-xl p-6 w-full max-w-xl max-h-[90vh] overflow-y-auto">
         <h2 className="text-base font-bold text-text1 mb-4">{werte.id ? 'Mitarbeiter bearbeiten' : 'Neuer Mitarbeiter'}</h2>
         {error && <div className="rounded border border-red-700 bg-[var(--red-dim)] text-[var(--red)] p-2 text-xs mb-3">{error}</div>}
+        {info && <div className="rounded border border-amber-700 bg-[var(--amber-dim)] text-[var(--amber)] p-2 text-xs mb-3">{info}</div>}
 
         <div className="space-y-3">
           <div className="grid grid-cols-2 gap-2">
@@ -179,7 +286,7 @@ function MaModal({ werte, berufsgruppen, alleMa, onClose, onSaved }: {
             <Field label="Nachname" required value={nachname} onChange={setNachname} />
           </div>
           <div className="grid grid-cols-2 gap-2">
-            <Field label="E-Mail" type="email" value={email} onChange={setEmail} />
+            <Field label="E-Mail (fuer Login)" type="email" value={email} onChange={setEmail} />
             <Field label="Telefon" value={telefon} onChange={setTelefon} />
           </div>
           <Field label="Position" value={position} onChange={setPosition} placeholder="z. B. Sicherheitsmitarbeiter" />
@@ -234,16 +341,38 @@ function MaModal({ werte, berufsgruppen, alleMa, onClose, onSaved }: {
               <input type="number" min={0} step={0.01} value={lohnProStunde} onChange={(e) => setLohnProStunde(e.target.value)} className={inputCls} />
             </div>
           </div>
-        </div>
 
-        <p className="text-[10px] text-text3 mt-4">
-          Login-Einladung separat unter <a href="/einladungen" className="text-accent">Team einladen</a>.
-        </p>
+          {istNeu && (
+            <div className="rounded-lg bg-bg2 border border-border1 p-3 space-y-2">
+              <Label>Login-Einladung</Label>
+              <label className="flex items-center gap-2 text-sm text-text2">
+                <input type="checkbox" checked={einladenSenden} onChange={(e) => setEinladenSenden(e.target.checked)} disabled={!email}
+                  className="w-4 h-4" />
+                <span>Einladung per E-Mail an <strong className="text-text1">{email || '(keine E-Mail)'}</strong> schicken</span>
+              </label>
+              {einladenSenden && email && (
+                <div className="grid grid-cols-3 gap-2">
+                  <div>
+                    <Label>Login-Rolle</Label>
+                    <select value={rolle} onChange={(e) => setRolle(e.target.value as Rolle)} className={inputCls}>
+                      <option value="mitarbeiter">Mitarbeiter</option>
+                      <option value="leitung">Leitung</option>
+                      <option value="admin">Admin</option>
+                    </select>
+                  </div>
+                  <p className="col-span-2 text-[10px] text-text3 self-end">
+                    Mitarbeiter sieht eigene Schichten/Antraege. Leitung verwaltet Plan + Antraege. Admin zusaetzlich Stammdaten.
+                  </p>
+                </div>
+              )}
+            </div>
+          )}
+        </div>
 
         <div className="flex gap-2 justify-end mt-5">
           <button type="button" onClick={onClose} className="px-3 py-1.5 rounded-lg border border-border2 text-text2 text-sm">Abbrechen</button>
           <button type="submit" disabled={loading || !vorname || !nachname} className="px-3 py-1.5 rounded-lg bg-accent text-white text-sm font-semibold disabled:opacity-50">
-            {loading ? 'Speichere...' : werte.id ? 'Aktualisieren' : 'Anlegen'}
+            {loading ? 'Speichere...' : werte.id ? 'Aktualisieren' : (einladenSenden && email ? 'Anlegen + Einladen' : 'Anlegen')}
           </button>
         </div>
       </form>
