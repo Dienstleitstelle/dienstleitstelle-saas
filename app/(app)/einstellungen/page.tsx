@@ -6,10 +6,21 @@ const KARTEN = [
   {
     href: '/einstellungen/berufsgruppen',
     titel: 'Berufsgruppen & Regeln',
-    beschreibung: 'Lege Berufsgruppen an und definiere die Regeln dafür (Maximalstunden, Ruhezeit, Pause).',
+    beschreibung: 'Berufsgruppen anlegen und pro Gruppe Regeln definieren (Maximalstunden, Ruhezeit, Pause).',
     icon: '👔',
   },
-  // Weitere Karten kommen in Phase 6+
+  {
+    href: '/einstellungen/berichts-vorlagen',
+    titel: 'Berichts-Vorlagen',
+    beschreibung: 'Eigene Formulare für Übergaben, Vorfälle, Wartung etc. — Felder frei wählbar.',
+    icon: '📋',
+  },
+  {
+    href: '/einladungen',
+    titel: 'Team einladen',
+    beschreibung: 'Neue Mitglieder per Magic-Link in dein Unternehmen einladen.',
+    icon: '✉️',
+  },
 ];
 
 export default async function EinstellungenPage() {
@@ -31,15 +42,4 @@ export default async function EinstellungenPage() {
           <Link key={k.href} href={k.href}
             className="group block rounded-xl border border-border1 bg-bg1 p-5 hover:border-accent transition-colors">
             <div className="flex items-start gap-3">
-              <span className="text-2xl">{k.icon}</span>
-              <div className="min-w-0">
-                <div className="text-text1 font-semibold group-hover:text-accent">{k.titel}</div>
-                <div className="text-text3 text-xs mt-1">{k.beschreibung}</div>
-              </div>
-            </div>
-          </Link>
-        ))}
-      </div>
-    </div>
-  );
-}
+              <span className="text-2xl
