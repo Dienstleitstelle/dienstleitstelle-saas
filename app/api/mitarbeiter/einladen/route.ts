@@ -2,10 +2,11 @@ import { NextResponse, type NextRequest } from 'next/server';
 import { createClient, createServiceRoleClient } from '@/lib/supabase/server';
 
 // POST /api/mitarbeiter/einladen
-// Body: { mitarbeiter_id?: string, email: string, vorname?: string, nachname?: string, rolle?: 'admin'|'leitung'|'mitarbeiter' }
-// 1) Caller-Auth + Rolle pruefen
-// 2) Invitation erstellen (Token wird automatisch generiert)
-// 3) Magic-Link Mail schicken via supabase.auth.admin.inviteUserByEmail
+// Body: { mitarbeiter_id?, email, vorname?, nachname?, rolle?, sendMail?: boolean }
+// 1) Caller pruefen (admin/leitung)
+// 2) Einladung erstellen (oder bestehende offene wiederverwenden)
+// 3) Optional Magic-Link-Mail schicken (nur wenn sendMail=true)
+// 4) IMMER invite_link zurueckgeben
 export async function POST(request: NextRequest) {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
@@ -25,12 +26,16 @@ export async function POST(request: NextRequest) {
   }
 
   const body = await request.json();
-  const { mitarbeiter_id, email, vorname, nachname, rolle } = body as {
+  const {
+    mitarbeiter_id, email, vorname, nachname, rolle,
+    sendMail = false,
+  } = body as {
     mitarbeiter_id?: string;
     email?: string;
     vorname?: string;
     nachname?: string;
     rolle?: 'admin' | 'leitung' | 'mitarbeiter';
+    sendMail?: boolean;
   };
 
   if (!email || !email.includes('@')) {
@@ -53,11 +58,9 @@ export async function POST(request: NextRequest) {
   let invitationId: string;
 
   if (existing && new Date(existing.expires_at as string) > new Date()) {
-    // Offene Einladung wiederverwenden
     invitationToken = existing.token as string;
     invitationId = existing.id as string;
   } else {
-    // Neue Einladung anlegen
     const { data: inv, error: invErr } = await supabase
       .from('invitations')
       .insert({
@@ -78,44 +81,41 @@ export async function POST(request: NextRequest) {
     invitationId = inv.id as string;
   }
 
-  // Magic-Link Mail via Service-Role schicken
   const origin = new URL(request.url).origin;
-  const service = createServiceRoleClient();
-  const { error: mailErr } = await service.auth.admin.inviteUserByEmail(email, {
-    data: { invitation_token: invitationToken, vorname, nachname },
-    redirectTo: `${origin}/auth/callback?next=/dashboard`,
-  });
+  const invite_link = `${origin}/invite/${invitationToken}`;
 
-  // Wenn der User bereits in auth.users existiert, faellt inviteUserByEmail mit
-  // "already been registered" zurueck. Dann benutze magicLink statt invite.
-  if (mailErr && mailErr.message.toLowerCase().includes('already')) {
-    const { error: linkErr } = await service.auth.signInWithOtp({
-      email,
-      options: {
-        data: { invitation_token: invitationToken },
-        emailRedirectTo: `${origin}/auth/callback?next=/dashboard`,
-      },
+  let mailStatus: 'skipped' | 'sent' | 'failed' = 'skipped';
+  let mailError: string | undefined;
+
+  if (sendMail) {
+    const service = createServiceRoleClient();
+    const { error: mailErr } = await service.auth.admin.inviteUserByEmail(email, {
+      data: { invitation_token: invitationToken, vorname, nachname },
+      redirectTo: `${origin}/auth/callback?next=/dashboard`,
     });
-    if (linkErr) {
-      return NextResponse.json({
-        ok: true,
-        warnung: `Einladung angelegt, aber Mail-Versand fehlgeschlagen: ${linkErr.message}. Link manuell weitergeben.`,
-        invite_link: `${origin}/invite/${invitationToken}`,
-        invitation_id: invitationId,
+    if (mailErr && mailErr.message.toLowerCase().includes('already')) {
+      const { error: linkErr } = await service.auth.signInWithOtp({
+        email,
+        options: {
+          data: { invitation_token: invitationToken },
+          emailRedirectTo: `${origin}/auth/callback?next=/dashboard`,
+        },
       });
+      if (linkErr) { mailStatus = 'failed'; mailError = linkErr.message; }
+      else { mailStatus = 'sent'; }
+    } else if (mailErr) {
+      mailStatus = 'failed'; mailError = mailErr.message;
+    } else {
+      mailStatus = 'sent';
     }
-  } else if (mailErr) {
-    return NextResponse.json({
-      ok: true,
-      warnung: `Einladung angelegt, aber Mail-Versand fehlgeschlagen: ${mailErr.message}. Link manuell weitergeben.`,
-      invite_link: `${origin}/invite/${invitationToken}`,
-      invitation_id: invitationId,
-    });
   }
 
   return NextResponse.json({
     ok: true,
     invitation_id: invitationId,
-    invite_link: `${origin}/invite/${invitationToken}`,
+    invite_link,
+    mail_status: mailStatus,
+    mail_error: mailError,
+    email,
   });
 }
