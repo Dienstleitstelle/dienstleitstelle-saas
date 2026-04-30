@@ -69,7 +69,7 @@ export async function MitarbeiterDashboard({ userId, vorname, mitarbeiterId }: {
       <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
         <QuickAction href="/abwesenheit?neu=krank" icon="🤒" label="Krank melden" tone="red" />
         <QuickAction href="/abwesenheit?neu=urlaub" icon="🏖️" label="Urlaub beantragen" tone="green" />
-        <QuickAction href="/meine-schichten" icon="📅" label="Meine Schichten" />
+        <QuickAction href="/dienstplan" icon="📅" label="Meine Schichten" />
         <QuickAction href="/pinnwand" icon="📌" label="Schwarzes Brett" />
       </div>
 
@@ -189,3 +189,4 @@ function Card({ title, children, countBadge, className }: { title: string; child
 function Empty({ children }: { children: React.ReactNode }) {
   return <div className="text-text3 text-sm py-3 text-center">{children}</div>;
 }
+     
